@@ -29,23 +29,101 @@ void transfer_data(char ch);
 void on_complete_transfer(void);
 
 void UART1_Init(void) {
-	//TODO
+	//enable usart1 clock
+	RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
+	//select system clock as clock source
+	RCC->CCIPR &= ~RCC_CCIPR_USART1SEL;
+	RCC->CCIPR |= RCC_CCIPR_USART1SEL_0;
 }
 
 void UART2_Init(void) {
-	//TODO
+	//enable usart clock
+	RCC->APB1ENR1 |= RCC_APB1ENR1_USART2EN;
+	//select system clock as clock source
+	RCC->CCIPR &= ~RCC_CCIPR_USART2SEL;
+	RCC->CCIPR |= RCC_CCIPR_USART2SEL_0;
 }
 
 void UART1_GPIO_Init(void) {
-	//TODO
+	//enable port b clock
+	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOBEN;
+	//set output mode to alternate function
+	GPIOB->MODER &= ~GPIO_MODER_MODE6;
+	GPIOB->MODER |= GPIO_MODER_MODE6_1;
+	GPIOB->MODER &= ~GPIO_MODER_MODE7;
+	GPIOB->MODER |= GPIO_MODER_MODE7_1;
+	//Set AFR
+	GPIOB->AFR[0] &= ~GPIO_AFRL_AFSEL6;
+	GPIOB->AFR[0] &= ~GPIO_AFRL_AFSEL7;
+	GPIOB->AFR[0] |= GPIO_AFRL_AFSEL6_0;
+	GPIOB->AFR[0] |= GPIO_AFRL_AFSEL6_1;
+	GPIOB->AFR[0] |= GPIO_AFRL_AFSEL6_2;
+	GPIOB->AFR[0] |= GPIO_AFRL_AFSEL7_0;
+	GPIOB->AFR[0] |= GPIO_AFRL_AFSEL7_1;
+	GPIOB->AFR[0] |= GPIO_AFRL_AFSEL7_2;
+	//set pins to very high speed
+	GPIOB->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR6;
+	GPIOB->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR7;
+	//set push pull output type
+	GPIOB->OTYPER &= ~GPIO_OTYPER_OT6;
+	GPIOB->OTYPER &= ~GPIO_OTYPER_OT7;
+	//pull up resistors
+	GPIOB->PUPDR &= ~GPIO_PUPDR_PUPD6;
+	GPIOB->PUPDR &= ~GPIO_PUPDR_PUPD7;
+	GPIOB->PUPDR |= GPIO_PUPDR_PUPD6_0;
+	GPIOB->PUPDR |= GPIO_PUPDR_PUPD7_0;
 }
 
 void UART2_GPIO_Init(void) {
-	//TODO
+	//clock enable
+	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN;
+	//output mode to alternate function
+	GPIOA->MODER &= ~GPIO_MODER_MODE2;
+	GPIOA->MODER |= GPIO_MODER_MODE2_1;
+	GPIOA->MODER &= ~GPIO_MODER_MODE3;
+	GPIOA->MODER |= GPIO_MODER_MODE3_1;
+	//set afr
+	GPIOA->AFR[0] &= ~GPIO_AFRL_AFSEL2;
+	GPIOA->AFR[0] &= ~GPIO_AFRL_AFSEL3;
+	GPIOA->AFR[0] |= GPIO_AFRL_AFSEL3_0;
+	GPIOA->AFR[0] |= GPIO_AFRL_AFSEL3_1;
+	GPIOA->AFR[0] |= GPIO_AFRL_AFSEL3_2;
+	GPIOA->AFR[0] |= GPIO_AFRL_AFSEL2_0;
+	GPIOA->AFR[0] |= GPIO_AFRL_AFSEL2_1;
+	GPIOA->AFR[0] |= GPIO_AFRL_AFSEL2_2;
+	//Set pins to very high speed
+	GPIOA->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR2;
+	GPIOA->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR3;
+	//set push pull output type
+	GPIOA->OTYPER &= ~GPIO_OTYPER_OT2;
+	GPIOA->OTYPER &= ~GPIO_OTYPER_OT3;
+	//pull up resistors
+	GPIOA->PUPDR &= ~GPIO_PUPDR_PUPD2;
+	GPIOA->PUPDR &= ~GPIO_PUPDR_PUPD3;
+	GPIOA->PUPDR |= GPIO_PUPDR_PUPD2_0;
+	GPIOA->PUPDR |= GPIO_PUPDR_PUPD3_0;
 }
 
+//copied from final part a, not sure if its right for this
 void USART_Init(USART_TypeDef * USARTx) {
-	//TODO
+	// Disable USART before configuring settings
+	USARTx->CR1 &= ~USART_CR1_UE;
+
+	// Set Communication Parameters
+	USARTx->CR1 &= ~(USART_CR1_M);     // 00 -> 8 Data Bits
+	USARTx->CR1 &= ~(USART_CR1_OVER8); // 0 -> Oversampling by 16
+	USARTx->CR2 &= ~(USART_CR2_STOP);  // 00 -> 1 Stop Bit
+
+	// Set Baud Rate
+	// f_CLK = 80 MHz, Baud Rate = 9600 = 80 MHz / DIV -> DIV = 8333 = 0x208D
+	USARTx->BRR = 0x208D;
+
+	// Enable Transmitter/Receiver
+	USARTx->CR1 |= USART_CR1_TE | USART_CR1_RE;
+
+	// Enable USART
+	USARTx->CR1 |= USART_CR1_UE;
+
 }
 
 /**

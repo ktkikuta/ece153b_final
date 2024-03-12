@@ -34,8 +34,9 @@ void SysTick_Init(void) {
 	NVIC_EnableIRQ(SysTick_IRQn);
 	NVIC_SetPriority(SysTick_IRQn, 1); // Set Priority to 1
 }
-
+//not sure if correct
 void SysTick_Handler(void) {
+	step++;
 	rotate();
 }
 
@@ -45,8 +46,6 @@ void delay(uint32_t ms) {
 	step = 0;
 	//Reset VAL to 0
 	SysTick->VAL = 0;
-	//Set LOAD
-	SysTick->LOAD = 79999;
 	//Enable SysTick
 	SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk;
 	//busy waiting for counter to reach desired value

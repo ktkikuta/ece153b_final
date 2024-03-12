@@ -74,6 +74,7 @@ void UART2_GPIO_Init(void) {
 	GPIOA->PUPDR &= ~GPIO_PUPDR_PUPD3;
 	GPIOA->PUPDR |= GPIO_PUPDR_PUPD2_0;
 	GPIOA->PUPDR |= GPIO_PUPDR_PUPD3_0;
+}
 
 void USART_Init(USART_TypeDef* USARTx) {
 	// Disable USART before configuring settings
