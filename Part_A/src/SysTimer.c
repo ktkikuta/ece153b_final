@@ -36,9 +36,10 @@ void SysTick_Init(void) {
 }
 
 void SysTick_Handler(void) {
-	step++;
+	rotate();
 }
 
+//copied from lab 6
 void delay(uint32_t ms) {
 	//Reset Counter
 	step = 0;
