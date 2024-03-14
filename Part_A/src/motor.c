@@ -91,7 +91,6 @@ void rotate(void) {
 			step--;
 		}
 	}
-	//delay(1000);
 }
 
 void setDire(int8_t direction) {

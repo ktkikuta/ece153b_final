@@ -42,7 +42,6 @@ void SysTick_Handler(void) {
 	rotate();
 }
 
-//copied from lab 6, might have to change to not reset counter
 void delay(uint32_t ms) {
 	stepT = 0;
 	while(stepT < ms);
