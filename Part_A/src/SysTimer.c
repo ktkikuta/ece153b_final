@@ -9,7 +9,7 @@
 #include "SysTimer.h"
 #include "motor.h"
 
-static uint32_t volatile step;
+static uint32_t volatile stepT;
 
 void SysTick_Init(void) {
 	// SysTick Control & Status Register
@@ -17,6 +17,8 @@ void SysTick_Init(void) {
 
 	SysTick->LOAD = 79999;
 	SysTick->VAL = 0;
+
+	stepT = 0;
 
 	// Enables SysTick exception request
 	// 1 = counting down to zero asserts the SysTick exception request
@@ -36,19 +38,12 @@ void SysTick_Init(void) {
 }
 //not sure if correct
 void SysTick_Handler(void) {
-	step++;
+	stepT++;
 	rotate();
 }
 
-//copied from lab 6
+//copied from lab 6, might have to change to not reset counter
 void delay(uint32_t ms) {
-	//Reset Counter
-	step = 0;
-	//Reset VAL to 0
-	SysTick->VAL = 0;
-	//Enable SysTick
-	SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk;
-	//busy waiting for counter to reach desired value
-	while((SysTick->VAL & ms) == 0);
-	SysTick->CTRL &= ~SysTick_CTRL_ENABLE_Msk;
+	stepT = 0;
+	while(stepT < ms);
 }
