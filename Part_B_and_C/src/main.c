@@ -25,6 +25,12 @@ void UART_onInput(char* inputs, uint32_t size) {
 }
 
 int main(void) {
+
+	double x, y, z;
+	uint8_t Data_Send = 0;
+	uint8_t Data_Receive;
+	uint8_t SecondaryAddress = 0x48 << 1;
+
 	// Switch System Clock = 80 MHz
 	System_Clock_Init();
 	Motor_Init();
@@ -43,32 +49,35 @@ int main(void) {
 	//start door in closed position
 
 	while(1) {
+		//read accelerometer
+		readValues(&x, &y, &z);
+		//read tempurature sensor
+		I2C_SendData(I2C1, SecondaryAddress, &Data_Send, 1);
+		I2C_ReceiveData(I2C1, SecondaryAddress, &Data_Receive, 1);
 
-		//Check if tempurature goes above threshold
+		if(Data_Receive > upperThreshold){				//Check if tempurature goes above threshold
+			sprintf(buffer, "Tempurature too high. Door opening.\n");
+			UART_print(buffer);
+			//open door, how do open and read accelerometer in non blocking
+			setDire(1);
 
-		sprintf(buffer, "Tempurature too high. Door opening.\n");
-		UART_print(buffer);
-		//open door
-		sprintf(buffer, "Door opened.\n");
-		UART_print(buffer);
+			sprintf(buffer, "Door opened.\n");
+			UART_print(buffer);
+		}else if(Data_Receive < lowerThreshold){		//Check if tempurature goes below threshold
 
 
-		//Check if tempurature goes below threshold
+			sprintf(buffer, "Tempurature too low. Door closing.\n");
+			UART_print(buffer);
+			//close door
+			setDire(0);
 
-		sprintf(buffer, "Tempurature too low. Door closing.\n");
-		UART_print(buffer);
-		//close door
-		sprintf(buffer, "Door closed.\n");
-		UART_print(buffer);
 
-		//Console control of door
-		//read console input
-		//3 second delay where temp and acc dont control door
-		delay(3000);
-
+			sprintf(buffer, "Door closed.\n");
+			UART_print(buffer);
+		}
 		//TODO
 		LED_Toggle();
-		//tempurature and acceleration measurement at .1 second interval
-		delay(100);
+		//tempurature and acceleration measurement at .1 second interval?
+		delay(1000);
 	}
 }

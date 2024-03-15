@@ -28,14 +28,6 @@ static volatile int8_t dire = 0;
 static volatile uint8_t step = 0;
 
 void Motor_Init(void) {
-	/*//Enable HSI
-	RCC->CR |= RCC_CR_HSION;
-	while( (RCC->CR & RCC_CR_HSIRDY) == 0);
-
-	//Select HSI as system clock source
-	RCC->CFGR &= ~(RCC_CFGR_SW);
-	RCC->CFGR |= RCC_CFGR_SW_HSI;
-	while ((RCC->CFGR & RCC_CFGR_SWS) == 0);*/
 
 	//Enable GPIO Clock
 	RCC->AHB2ENR |= (RCC_AHB2ENR_GPIOCEN);
