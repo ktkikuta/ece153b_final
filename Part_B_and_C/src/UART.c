@@ -124,6 +124,14 @@ void USART_Init(USART_TypeDef * USARTx) {
 	// Enable USART
 	USARTx->CR1 |= USART_CR1_UE;
 
+	//Configure NVIC
+	NVIC_EnableIRQ(USART1_IRQn);
+	NVIC_SetPriority(USART1_IRQn , 1);
+
+	//idk if we need this or not
+	NVIC_EnableIRQ(USART2_IRQn);
+	NVIC_SetPriority(USART2_IRQn , 1);
+
 }
 
 /**
@@ -144,6 +152,9 @@ void transfer_data(char ch) {
 	//TODO
 	// Append character to input buffer.
 	// If the character is end-of-line, invoke UART_onInput
+	if(ch == '\n'){
+		UART_onInput(inputs, IO_SIZE);
+	}
 }
 
 /**
@@ -157,11 +168,16 @@ void on_complete_transfer(void) {
 void USART1_IRQHandler(void){
 	//TODO
 	// When receive a character, invoke transfer_data
+	//not sure what character to use as parameter
+	transfer_data();
 	// When complete sending data, invoke on_complete_transfer
+	on_complete_transfer();
 }
 
 void USART2_IRQHandler(void){
 	//TODO
 	// When receive a character, invoke transfer_data
+	transfer_data();
 	// When complete sending data, invoke on_complete_transfer
+	on_complete_transfer();
 }

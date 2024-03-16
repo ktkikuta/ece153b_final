@@ -21,9 +21,6 @@ static const uint32_t HalfStep[8] = { (~(GPIO_ODR_OD5 | GPIO_ODR_OD6 | GPIO_ODR_
 										(~(GPIO_ODR_OD5 | GPIO_ODR_OD9) | GPIO_ODR_OD6 | GPIO_ODR_OD8)};
 
 
-
-
-
 static volatile int8_t dire = 0;
 static volatile uint8_t step = 0;
 

@@ -23,7 +23,8 @@ void SysTick_Init(void) {
 	// 0 = counting down to zero does not assert the SysTick exception request
 	SysTick->CTRL |= SysTick_CTRL_TICKINT_Msk;
 
-	SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk;
+	//SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk;
+
 	// Select clock source
 	// If CLKSOURCE = 0, the external clock is used. The frequency of SysTick clock is the frequency of the AHB clock divided by 8.
 	// If CLKSOURCE = 1, the processor clock is used.
@@ -32,7 +33,7 @@ void SysTick_Init(void) {
 	// Enable SysTick IRQ and SysTick Timer
 	// Configure and Enable SysTick interrupt in NVIC
 	NVIC_EnableIRQ(SysTick_IRQn);
-	NVIC_SetPriority(SysTick_IRQn, 1); // Set Priority to 1
+	NVIC_SetPriority(SysTick_IRQn, 2); // Set Priority to 2
 }
 
 void SysTick_Handler(void) {
@@ -41,6 +42,8 @@ void SysTick_Handler(void) {
 }
 
 void delay(uint32_t ms) {
+	SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk;
 	stepT = 0;
 	while(stepT < ms);
+	SysTick->CTRL &= ~SysTick_CTRL_ENABLE_Msk;
 }
