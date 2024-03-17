@@ -18,6 +18,7 @@ static volatile uint8_t input_size = 0;
 static volatile uint8_t pending_size = 0;
 static volatile uint8_t * active = data_t_0;
 static volatile uint8_t * pending = data_t_1;
+static volatile uint8_t index = 0;
 
 #define SEL_0 1
 #define BUF_0_EMPTY 2
@@ -28,6 +29,7 @@ static volatile uint8_t * pending = data_t_1;
 void transfer_data(char ch);
 void on_complete_transfer(void);
 
+//need to set up correct DMA channel to use USARTx_TX
 void UART1_Init(void) {
 	//enable usart1 clock
 	RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
@@ -36,6 +38,7 @@ void UART1_Init(void) {
 	RCC->CCIPR |= RCC_CCIPR_USART1SEL_0;
 }
 
+//need to set up correct DMA channel to use USARTx_TX
 void UART2_Init(void) {
 	//enable usart clock
 	RCC->APB1ENR1 |= RCC_APB1ENR1_USART2EN;
@@ -151,9 +154,13 @@ void UART_print(char* data) {
 void transfer_data(char ch) {
 	//TODO
 	// Append character to input buffer.
+	inputs[index] = ch;
 	// If the character is end-of-line, invoke UART_onInput
 	if(ch == '\n'){
+		index = 0;
 		UART_onInput(inputs, IO_SIZE);
+	}else{
+		index++;
 	}
 }
 
@@ -169,6 +176,7 @@ void USART1_IRQHandler(void){
 	//TODO
 	// When receive a character, invoke transfer_data
 	//not sure what character to use as parameter
+	//need to set condition for when transmission is complete?? Part B instructions
 	transfer_data();
 	// When complete sending data, invoke on_complete_transfer
 	on_complete_transfer();

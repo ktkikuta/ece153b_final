@@ -1,7 +1,7 @@
 /*
  * ECE 153B
  *
- * Name(s):
+ * Name(s): Kole Kikuta, Alex Xu
  * Section:
  * Project
  */
@@ -68,12 +68,13 @@ int main(void) {
 	USART_Init(USART1);
 	UART1_Init();
 	UART1_GPIO_Init();
+	DMA_Init_UARTx( , );
 
 	sprintf(buffer, "Program Starts.\r\n");
 	UART_print(buffer);
 
 	//start door in closed position
-	
+
 
 	while(1) {
 		//read accelerometer
