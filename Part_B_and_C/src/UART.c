@@ -146,6 +146,20 @@ void UART_print(char* data) {
 	//Transfer char array to buffer
 	//Check DMA status. If DMA is ready, send data
 	//If DMA is not ready, put the data aside
+
+	if ( /* !UART_Is_Transmitting */ ) {
+		// set DMA memory address and size
+		DMA1_Channel6->CMAR = (uint32_t) data;
+		DMA1_Channel6->CNDTR = strlen(data);
+
+		// enable DMA channel to start transmission
+		DMA1_Channel6->CCR |= DMA_CCR_EN;
+		/* UART_Is_Transmitting */ = 1;
+	} else {
+		// store data and wait for transmission
+		strncpy(/* UART_Buffer */, data, BufferSize);
+		/* UART_Buffer_Idx */ = strlen(data);
+	}
 }
 
 /**
@@ -170,6 +184,19 @@ void transfer_data(char ch) {
 void on_complete_transfer(void) {
 	//TODO
 	// If there are pending data to send, switch active and pending buffer, and send data
+	if ( /* UART_Buffer */ ) {
+		// start transmitting buffered data
+		DMA1_Channel6->CMAR = (uint32_t) /* UART_Buffer */;
+		DMA1_Channel6->CNDTR = /* UART_Buffer_Idx */;
+
+		// re-enable DMA channel to start new transmission
+		DMA1_Channel6->CCR |= DMA_CCR_EN;
+
+		// reset buffer index
+		/* UART_Buffer_Idx */ = 0;
+	} else {
+		/* UART_Is_Transmitting */ = 0;
+	}
 }
 
 void USART1_IRQHandler(void){
@@ -177,9 +204,17 @@ void USART1_IRQHandler(void){
 	// When receive a character, invoke transfer_data
 	//not sure what character to use as parameter
 	//need to set condition for when transmission is complete?? Part B instructions
-	transfer_data();
-	// When complete sending data, invoke on_complete_transfer
-	on_complete_transfer();
+	// check if RX is not empty
+	if (USART1->ISR & USART_ISR_RXNE) {
+		transfer_data( (char) USART1->RDR );
+	}
+
+	// check if transmission is done
+	if (USART1->ISR & USART_ISR_TC) {
+		// clear transfer complete flag
+		USART1->ICR |= USART_ICR_TCCF;
+		on_complete_transfer();
+	}
 }
 
 void USART2_IRQHandler(void){
