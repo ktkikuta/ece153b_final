@@ -72,12 +72,14 @@ void rotate(void) {
 		}else{
 			step++;
 		}
-	}else{				//counterclockwise, step--
+	}else if (dire == 1){				//counterclockwise, step--
 		if(step == 0){
 			step = 7;
 		}else{
 			step--;
 		}
+	}else {
+		// do nothing, stop door.
 	}
 }
 

@@ -22,30 +22,36 @@ static char buffer[IO_SIZE];
 #define OPENDOOR 0
 #define CLOSEDOOR 1
 
+int temp_disabled = 0;
+int temp_disabled_counter = 3000;
+
 // cannot use var name "inputs" here, we have a global var named that
 void UART_onInput(char* inputs, uint32_t size) {
 	//check input string, print out console message, rotate motor, print out console message, wait 3 seconds
-	if(inputs == "Open door\n"){
+	if(inputs == "open\n"){
 		sprintf(buffer, "Door opening.\n");
 		UART_print(buffer);
 		//open door by enabling systick, interrupts start happening, have accelerometer disable systick to stop rotating
 		setDire(1);
 		door_spinning = 1;
 		door_spinning = 0;
-		sprintf(buffer, "Door opened.\n");
+		sprintf(buffer, "Door opened.\n"); 
 		UART_print(buffer);
-		delay(3000);
-	}else if(inputs == "Close door\n"){
+		// delay(3000);
+		temp_disabled = 1;
+	}else if(inputs == "close\n"){
 		sprintf(buffer, "Door closing\n");
 		UART_print(buffer);
 		setDire(0);
 		door_spinning = 1;
 		door_spinning = 0;
-		sprintf(buffer, "Door closed.\n");
+		sprintf(buffer, "Door closed.\n"); 
 		UART_print(buffer);
-		delay(3000);
+		// delay(3000);
+		temp_disabled = 1;
 	}else{
-		sprintf(buffer, "Not valid input (Open door, Close door).\n");
+		setDire(2);
+		sprintf(buffer, "Not valid input (open, close). Stopping door.\n");
 		UART_print(buffer);
 	}
 }
@@ -89,7 +95,6 @@ int main(void) {
 		while(y > -1){
 			readValues(&x, &y, &z);
 		}
-		door_spinning = 0;
 	}
 	
 	
@@ -112,40 +117,59 @@ int main(void) {
 			UART_print(buffer);
 			prevTemp = Data_Receive;
 		}
-		
 		/* * * * * * * * * * * * * * * * * * * * * * * * * */
-		// schmitt upper
-		if (temp > 30) {
-			sprintf(buffer, "Temperature too high. Door opening.\r\n");
-			UART_print(buffer);
-			
-			setDire(OPENDOOR);
-			door_spinning = 1;
-			while (z < 1) readValues(&x, &y, &z);
-			door_spinning = 0;
-			
-			sprintf(buffer, "Door opened.\r\n");
-			UART_print(buffer);
-		}
+		// logic for stopping door when door is finished closing or opening
 		
-		/* * * * * * * * * * * * * * * * * * * * * * * * * */
-		// schmitt lower
-		if (temp < 20) {
-			sprintf(buffer, "Temperature too low. Door closing.\r\n");
-			UART_print(buffer);
-			
-			setDire(CLOSEDOOR);
-			door_spinning = 1;
-			while (y > -1) readValues(&x, &y, &z);
+		if (z >= 1 || y <= -1) {
+			setDire(2); // set dire to stop, check rotate() in motor.c
 			door_spinning = 0;
-			
-			sprintf(buffer, "Door closed.\r\n");
-			UART_print(buffer);
 		}
 		
 		/* * * * * * * * * * * * * * * * * * * * * * * * * */
 		
-		// input reading (and delays to temp sensor) are handled in UART_onInput()
+		
+		if (temp_disabled == 0) {
+			/* * * * * * * * * * * * * * * * * * * * * * * * * */
+			// schmitt upper
+			if (temp > 30 && z < 1) {
+				sprintf(buffer, "Temperature too high. Door opening.\r\n");
+				UART_print(buffer);
+				
+				setDire(OPENDOOR);
+				door_spinning = 1;
+				// while (z < 1) readValues(&x, &y, &z);
+				// door_spinning = 0;
+				
+				sprintf(buffer, "Door opened.\r\n");
+				UART_print(buffer);
+			}
+			
+			/* * * * * * * * * * * * * * * * * * * * * * * * * */
+			// schmitt lower
+			if (temp < 20 && y > -1) {
+				sprintf(buffer, "Temperature too low. Door closing.\r\n");
+				UART_print(buffer);
+				
+				setDire(CLOSEDOOR);
+				door_spinning = 1;
+				// while (y > -1) readValues(&x, &y, &z);
+				// door_spinning = 0;
+				
+				sprintf(buffer, "Door closed.\r\n");
+				UART_print(buffer);
+			}
+		} else if (temp_disabled == 1) {
+			// delay(3000);
+			// not using delay() because we need the while loop checking acc even when temp is disabled
+			temp_disabled_counter -= 10; // 0.1 seconds per loop
+			if (temp_disabled_counter <= 0) {
+				temp_disabled = 0;
+				temp_disabled_counter = 3000;
+			}
+		}
+		/* * * * * * * * * * * * * * * * * * * * * * * * * */
+		
+		
 		
 		
 		// sprintf(buffer, "X: %.2f, Y: %.2f, Z: %.2f\n", x, y, z);
@@ -186,6 +210,6 @@ int main(void) {
 		//TODO
 		LED_Toggle();
 		//tempurature and acceleration measurement at .1 second interval?
-		delay(1000);
+		delay(100);
 	}
 }
