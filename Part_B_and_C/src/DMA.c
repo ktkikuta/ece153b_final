@@ -7,6 +7,7 @@
  */
 
 #include "DMA.h"
+#include "UART.h"
 #include "SysTimer.h"
 
 //copied from lab 6, need to figure out correct channel,
@@ -40,11 +41,11 @@ void DMA_Init_UARTx(DMA_Channel_TypeDef * tx, USART_TypeDef * uart) {
 	// disable circular mode
 	tx->CCR &= ~DMA_CCR_CIRC;
 
-	// set data transfer direction to peripheral-to-memory
-	tx->CCR &= ~DMA_CCR_DIR;
+	// set data transfer direction to read from memory
+	tx->CCR |= DMA_CCR_DIR;
 
-	// set data source and destination
-	tx->CPAR = (uint32_t) &uart->TDR;
+	// set data destination
+	tx->CPAR = (uint32_t)&(uart->TDR);
 
 	// disable half transfer interrupt
 	tx->CCR &= ~DMA_CCR_HTIE;
@@ -56,38 +57,46 @@ void DMA_Init_UARTx(DMA_Channel_TypeDef * tx, USART_TypeDef * uart) {
 	tx->CCR |= DMA_CCR_TCIE;
 
 	// set interrupt priority to 0
-    NVIC_SetPriority(DMA1_Channel6_IRQn, 0);
-
+	NVIC_ClearPendingIRQ(DMA1_Channel4_IRQn);
+    NVIC_SetPriority(DMA1_Channel4_IRQn, 0);
     // enable interrupt
-    NVIC_EnableIRQ(DMA1_Channel6_IRQn);
+    NVIC_EnableIRQ(DMA1_Channel4_IRQn);
+
+	// set interrupt priority to 0
+	NVIC_ClearPendingIRQ(DMA1_Channel7_IRQn);
+    NVIC_SetPriority(DMA1_Channel7_IRQn, 0);
+    // enable interrupt
+    NVIC_EnableIRQ(DMA1_Channel7_IRQn);
 }
 
 
-void DMA1_Channel6_IRQHandler(void){
-	NVIC_ClearPendingIRQ(DMA1_Channel6_IRQn);
+void DMA1_Channel4_IRQHandler(void){
+	NVIC_ClearPendingIRQ(DMA1_Channel4_IRQn);
 
 	// check transfer complete flag
-	if (DMA1->ISR & DMA_ISR_TCIF6) {
+	if (DMA1->ISR & DMA_ISR_TCIF4) {
 		// clear transfer complete flag
-		DMA1->IFCR = DMA_IFCR_CTCIF6;
-
+		DMA1->IFCR = DMA_IFCR_CTCIF4;
+		on_complete_transfer();
 		// disable DMA
-		DMA1_Channel6->CCR &= ~DMA_CCR_EN;
+		DMA1_Channel4->CCR &= ~DMA_CCR_EN;
 	}
+
 	// clear global interrupt flag
-	DMA1->IFCR = DMA_IFCR_CGIF6;
+	DMA1->IFCR |= DMA_IFCR_CGIF4;
 }
-void DMA1_Channel5_IRQHandler(void){
-	NVIC_ClearPendingIRQ(DMA1_Channel5_IRQn);
+void DMA1_Channel7_IRQHandler(void){
+	NVIC_ClearPendingIRQ(DMA1_Channel7_IRQn);
 
 	// check transfer complete flag
-	if (DMA1->ISR & DMA_ISR_TCIF5) {
+	if (DMA1->ISR & DMA_ISR_TCIF7) {
 		// clear transfer complete flag
-		DMA1->IFCR = DMA_IFCR_CTCIF5;
-
+		DMA1->IFCR = DMA_IFCR_CTCIF7;
+		on_complete_transfer();
 		// disable DMA
-		DMA1_Channel5->CCR &= ~DMA_CCR_EN;
+		DMA1_Channel7->CCR &= ~DMA_CCR_EN;
 	}
+
 	// clear global interrupt flag
-	DMA1->IFCR = DMA_IFCR_CGIF5;
+	DMA1->IFCR |= DMA_IFCR_CGIF7;
 }

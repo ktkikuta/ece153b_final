@@ -82,16 +82,19 @@ void SPI1_Init(void){
 }
 
 uint16_t SPI_Transfer_Data(uint16_t write_data){
-	volatile uint16_t *dr;
-	dr = (volatile uint16_t*)&SPI1->DR;
-	// Wait for TXE (Transmit buffer empty)
-	while((SPI1->SR & SPI_SR_TXE) == 0);
-	// Write data
-	*dr = write_data;
-	// Wait for not busy
-	while((SPI1->SR & SPI_SR_BSY));
-	// Wait for RXNE (Receive buffer not empty)
-	while((SPI1->SR & SPI_SR_RXNE) == 0);
-	// Read data
-	return *dr;
+    // Wait for TXE (Transmit buffer empty)
+    while ( (SPI1->SR & SPI_SR_TXE) == 0 );
+
+    // Write data
+    *((volatile uint16_t*) &SPI1->DR) = write_data;
+
+    // Wait for not busy
+    while (SPI1->SR & SPI_SR_BSY);
+
+    // Wait for RXNE (Receive buffer not empty)
+    while ( (SPI1->SR & SPI_SR_RXNE) == 0 );
+
+    // Read data
+    uint16_t out = *((volatile uint16_t*) &SPI1->DR);
+    return out;
 }

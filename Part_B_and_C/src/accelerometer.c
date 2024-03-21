@@ -10,9 +10,10 @@ void accWrite(uint8_t addr, uint8_t val){
 
 uint8_t accRead(uint8_t addr){
 	// access SPI_Transfer_Data
-	uint16_t command = ((1 << 15) | (0 << 14) | ((addr & 0x3F) << 8) & 0xFF00);
+	uint16_t command = ( (1 << 7UL) | (0 << 6UL) | (addr & 0x3F) );
+	command = command << 8;
 	uint16_t readData = SPI_Transfer_Data(command);
-	return (readData & 0xFF);
+	return (readData);
 }
 
 void initAcc(void){

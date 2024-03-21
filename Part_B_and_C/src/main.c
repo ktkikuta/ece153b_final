@@ -19,6 +19,8 @@
 #include <stdio.h>
 
 static char buffer[IO_SIZE];
+#define OPENDOOR 0
+#define CLOSEDOOR 1
 
 void UART_onInput(char* inputs, uint32_t size) {
 	//check input string, print out console message, rotate motor, print out console message, wait 3 seconds
@@ -27,7 +29,8 @@ void UART_onInput(char* inputs, uint32_t size) {
 		UART_print(buffer);
 		//open door by enabling systick, interrupts start happening, have accelerometer disable systick to stop rotating
 		setDire(1);
-		SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk;
+		door_spinning = 1;
+		door_spinning = 0;
 		sprintf(buffer, "Door opened.\n");
 		UART_print(buffer);
 		delay(3000);
@@ -35,12 +38,13 @@ void UART_onInput(char* inputs, uint32_t size) {
 		sprintf(buffer, "Door closing\n");
 		UART_print(buffer);
 		setDire(0);
-		SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk;
+		door_spinning = 1;
+		door_spinning = 0;
 		sprintf(buffer, "Door closed.\n");
 		UART_print(buffer);
 		delay(3000);
 	}else{
-		sprintf(buffer, "Not valid input (Open door, Close door).\n")
+		sprintf(buffer, "Not valid input (Open door, Close door).\n");
 		UART_print(buffer);
 	}
 }
@@ -65,31 +69,52 @@ int main(void) {
 	initAcc();
 	I2C_GPIO_Init();
 	I2C_Initialization();
-	USART_Init(USART1);
-	UART1_Init();
-	UART1_GPIO_Init();
-	DMA_Init_UARTx( , );
+	USART_Init(USART2);
+	UART2_Init();
+	DMA_Init_UARTx(DMA1_Channel7 , USART2);
 
 	sprintf(buffer, "Program Starts.\r\n");
 	UART_print(buffer);
 
 	//start door in closed position
-
-
+	//Y = -1 closed
+	//Z = 1 open
+	readValues(&x, &y, &z);
+	if(y > -1){
+		setDire(CLOSEDOOR);
+		door_spinning = 1;
+		while(y > -1){
+			readValues(&x, &y, &z);
+		}
+		door_spinning = 0;
+	}
 	while(1) {
 		//read accelerometer
 		readValues(&x, &y, &z);
 		//read tempurature sensor
+		Data_Send = 0;
 		I2C_SendData(I2C1, SecondaryAddress, &Data_Send, 1);
 		I2C_ReceiveData(I2C1, SecondaryAddress, &Data_Receive, 1);
 
-		if(Data_Receive != prevTemp){
-			sprintf(buffer, "Tempurature: %d", Data_Receive);
+		// sprintf(buffer, "Tempurature: %d\n", Data_Receive);
+		// UART_print(buffer);
+
+		int temp = (Data_Receive & 0x7F) - (((Data_Receive & 0x80) != 0) ? 128 : 0);
+
+		if(temp != prevTemp){
+			//sprintf(buffer, "Tempurature: %d\n", Data_Receive);
+			//UART_print(buffer);
 			prevTemp = Data_Receive;
 		}
 
+		sprintf(buffer, "X: %.2f, Y: %.2f, Z: %.2f\n", x, y, z);
+		UART_print(buffer);
+
+
+
+		/*
 		//for console control of door
-		UART_onInput(inputs, IO_SIZE);
+		//UART_onInput(inputs, IO_SIZE);
 
 		//check accelerometer readings to end opening/closing door
 		//need to find acceleration parameters that make this work
@@ -116,9 +141,10 @@ int main(void) {
 			sprintf(buffer, "Door closed.\n");
 			UART_print(buffer);
 		}
+		*/
 		//TODO
 		LED_Toggle();
 		//tempurature and acceleration measurement at .1 second interval?
-		delay(100);
+		delay(1000);
 	}
 }

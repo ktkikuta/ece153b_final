@@ -11,7 +11,7 @@
 #include "DMA.h"
 
 static volatile DMA_Channel_TypeDef * tx;
-static volatile char inputs[IO_SIZE];
+
 static volatile uint8_t data_t_0[IO_SIZE];
 static volatile uint8_t data_t_1[IO_SIZE];
 static volatile uint8_t input_size = 0;
@@ -31,20 +31,44 @@ void on_complete_transfer(void);
 
 //need to set up correct DMA channel to use USARTx_TX
 void UART1_Init(void) {
+	UART1_GPIO_Init();
 	//enable usart1 clock
 	RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
 	//select system clock as clock source
 	RCC->CCIPR &= ~RCC_CCIPR_USART1SEL;
 	RCC->CCIPR |= RCC_CCIPR_USART1SEL_0;
+
+	tx = DMA1_Channel4;
+
+	DMA_Init_UARTx(tx, USART1);
+	tx->CMAR = (uint32_t)active;
+	DMA1_CSELR->CSELR &= ~DMA_CSELR_C4S;
+	DMA1_CSELR->CSELR |= (1<<13); //(0010: Channel 7 mapped on USART2_TX)
+
+	USART_Init(USART1);
+	NVIC_EnableIRQ(USART1_IRQn);
+	NVIC_SetPriority(USART1_IRQn, 1);  // Set USART2 interrupt priority to 1
 }
 
 //need to set up correct DMA channel to use USARTx_TX
 void UART2_Init(void) {
+	UART2_GPIO_Init();
 	//enable usart clock
 	RCC->APB1ENR1 |= RCC_APB1ENR1_USART2EN;
 	//select system clock as clock source
 	RCC->CCIPR &= ~RCC_CCIPR_USART2SEL;
 	RCC->CCIPR |= RCC_CCIPR_USART2SEL_0;
+
+	tx = DMA1_Channel7;
+
+	DMA_Init_UARTx(tx, USART2);
+	tx->CMAR = (uint32_t)active;
+	DMA1_CSELR->CSELR &= ~DMA_CSELR_C7S;
+	DMA1_CSELR->CSELR |= (1<<25);
+
+	USART_Init(USART2);
+	NVIC_EnableIRQ(USART2_IRQn);
+	NVIC_SetPriority(USART2_IRQn, 1);
 }
 
 void UART1_GPIO_Init(void) {
@@ -121,6 +145,8 @@ void USART_Init(USART_TypeDef * USARTx) {
 	// f_CLK = 80 MHz, Baud Rate = 9600 = 80 MHz / DIV -> DIV = 8333 = 0x208D
 	USARTx->BRR = 0x208D;
 
+	USARTx->CR3 |= USART_CR3_DMAT;
+
 	// Enable Transmitter/Receiver
 	USARTx->CR1 |= USART_CR1_TE | USART_CR1_RE;
 
@@ -141,24 +167,40 @@ void USART_Init(USART_TypeDef * USARTx) {
  * This function accepts a string that should be sent through UART
 */
 void UART_print(char* data) {
-	//TODO
+	uint8_t data_length = 0;
+	
+	while(data[data_length] != '\0'){
+		data_length++;
+	}
 
 	//Transfer char array to buffer
 	//Check DMA status. If DMA is ready, send data
 	//If DMA is not ready, put the data aside
+	
+	if ((tx->CCR & DMA_CCR_EN) == 0 ) {
+		for(int i = 0; i < IO_SIZE; i++){
+			active[i]= '\0';
+		}
 
-	if ( /* !UART_Is_Transmitting */ ) {
+		for(uint8_t i = 0; i<data_length; i++){
+			active[i] = (uint8_t)data[i];
+		}
+		tx->CMAR = (uint32_t)active;
 		// set DMA memory address and size
-		DMA1_Channel6->CMAR = (uint32_t) data;
-		DMA1_Channel6->CNDTR = strlen(data);
+		tx->CNDTR = data_length;
 
 		// enable DMA channel to start transmission
-		DMA1_Channel6->CCR |= DMA_CCR_EN;
-		/* UART_Is_Transmitting */ = 1;
+		tx->CCR |= DMA_CCR_EN;
+
 	} else {
-		// store data and wait for transmission
-		strncpy(/* UART_Buffer */, data, BufferSize);
-		/* UART_Buffer_Idx */ = strlen(data);
+		for(int i = 0; i < IO_SIZE; i++){
+			pending[i]= '\0';
+		}
+		
+		for(uint8_t i = 0; i<data_length; i++){
+			pending[i] = (uint8_t)data[i];
+		}
+		pending_size = data_length;
 	}
 }
 
@@ -166,15 +208,12 @@ void UART_print(char* data) {
  * This function should be invoked when a character is accepted through UART
 */
 void transfer_data(char ch) {
-	//TODO
 	// Append character to input buffer.
-	inputs[index] = ch;
+	inputs[input_size++] = ch;
 	// If the character is end-of-line, invoke UART_onInput
 	if(ch == '\n'){
-		index = 0;
 		UART_onInput(inputs, IO_SIZE);
-	}else{
-		index++;
+		input_size = 0;
 	}
 }
 
@@ -182,31 +221,28 @@ void transfer_data(char ch) {
  * This function should be invoked when DMA transaction is completed
 */
 void on_complete_transfer(void) {
-	//TODO
 	// If there are pending data to send, switch active and pending buffer, and send data
-	if ( /* UART_Buffer */ ) {
-		// start transmitting buffered data
-		DMA1_Channel6->CMAR = (uint32_t) /* UART_Buffer */;
-		DMA1_Channel6->CNDTR = /* UART_Buffer_Idx */;
-
-		// re-enable DMA channel to start new transmission
-		DMA1_Channel6->CCR |= DMA_CCR_EN;
-
-		// reset buffer index
-		/* UART_Buffer_Idx */ = 0;
-	} else {
-		/* UART_Is_Transmitting */ = 0;
+	if(pending_size > 0){
+		tx->CMAR = (uint32_t)pending;
+		// set DMA memory address and size
+		tx->CNDTR = pending_size;
+		// enable DMA channel to start transmission
+		tx->CCR |= DMA_CCR_EN;
+		pending_size = 0;
 	}
 }
 
 void USART1_IRQHandler(void){
-	//TODO
 	// When receive a character, invoke transfer_data
 	//not sure what character to use as parameter
 	//need to set condition for when transmission is complete?? Part B instructions
 	// check if RX is not empty
+	NVIC_ClearPendingIRQ(USART1_IRQn);
+
 	if (USART1->ISR & USART_ISR_RXNE) {
-		transfer_data( (char) USART1->RDR );
+		USART1->RQR |= USART_RQR_RXFRQ;
+		char ch = USART1->RDR;
+		transfer_data(ch);
 	}
 
 	// check if transmission is done
@@ -218,9 +254,20 @@ void USART1_IRQHandler(void){
 }
 
 void USART2_IRQHandler(void){
-	//TODO
-	// When receive a character, invoke transfer_data
-	transfer_data();
-	// When complete sending data, invoke on_complete_transfer
-	on_complete_transfer();
+
+	NVIC_ClearPendingIRQ(USART2_IRQn);
+
+	if (USART2->ISR & USART_ISR_RXNE) {
+		USART2->RQR |= USART_RQR_RXFRQ;
+		char ch = USART2->RDR;
+		transfer_data(ch);
+	}
+
+	// check if transmission is done
+	if (USART2->ISR & USART_ISR_TC) {
+		// clear transfer complete flag
+		USART2->ICR |= USART_ICR_TCCF;
+		tx->CCR &= ~DMA_CCR_EN;
+		on_complete_transfer();
+	}
 }

@@ -23,7 +23,7 @@ void SysTick_Init(void) {
 	// 0 = counting down to zero does not assert the SysTick exception request
 	SysTick->CTRL |= SysTick_CTRL_TICKINT_Msk;
 
-	//SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk;
+	SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk;
 
 	// Select clock source
 	// If CLKSOURCE = 0, the external clock is used. The frequency of SysTick clock is the frequency of the AHB clock divided by 8.
@@ -38,7 +38,10 @@ void SysTick_Init(void) {
 
 void SysTick_Handler(void) {
 	stepT++;
-	rotate();
+	if(door_spinning){
+		rotate();
+	}
+
 }
 
 void delay(uint32_t ms) {

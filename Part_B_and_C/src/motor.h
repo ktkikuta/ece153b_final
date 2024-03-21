@@ -7,4 +7,7 @@ void Motor_Init(void);
 void rotate(void);
 void setDire(int8_t direction);
 
+static volatile int8_t dire = 0;
+
+
 #endif /* __STM32L476G_DISCOVERY_MOTOR_H */

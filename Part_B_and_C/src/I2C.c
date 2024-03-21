@@ -33,8 +33,8 @@ void I2C_GPIO_Init(void) {
 	//PUPDR - Pull up
 	GPIOB->PUPDR &= ~GPIO_PUPDR_PUPD8;
 	GPIOB->PUPDR &= ~GPIO_PUPDR_PUPD9;
-	GPIOB->PUPDR |= GPIO_PUPDR_PUPD8_1;
-	GPIOB->PUPDR |= GPIO_PUPDR_PUPD9_1;
+	GPIOB->PUPDR |= GPIO_PUPDR_PUPD8_0;
+	GPIOB->PUPDR |= GPIO_PUPDR_PUPD9_0;
 }
 
 #define I2C_TIMINGR_PRESC_POS	28
@@ -78,16 +78,16 @@ void I2C_Initialization(void){
 	I2C1->TIMINGR |= (7 << 28);
 	//set SCLDEL to 9
 	I2C1->TIMINGR &= ~I2C_TIMINGR_SCLDEL;
-	I2C1->TIMINGR |= (9 << 20);
+	I2C1->TIMINGR |= (10 << 20);
 	//set SDADEL to 11.5
 	I2C1->TIMINGR &= ~I2C_TIMINGR_SDADEL;
-	I2C1->TIMINGR |= (11 << 16);
+	I2C1->TIMINGR |= (12 << 16);
 	//set SCLH to 39
 	I2C1->TIMINGR &= ~I2C_TIMINGR_SCLH;
-	I2C1->TIMINGR |= (39 << 8);
+	I2C1->TIMINGR |= (40 << 8);
 	//set SCLL to 46
 	I2C1->TIMINGR &= ~I2C_TIMINGR_SCLL;
-	I2C1->TIMINGR |= 46;
+	I2C1->TIMINGR |= 47;
 	//disable own address 2
 	I2C1->OAR2 &= ~I2C_OAR2_OA2EN;
 	//disable own address 1
