@@ -14,7 +14,7 @@
 void DMA_Init_UARTx(DMA_Channel_TypeDef * tx, USART_TypeDef * uart) {
 	// enable clock for DMA
 	RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
-	delay(2); // wait for DMA to finish setting up
+	//delay(2); // wait for DMA to finish setting up
 
 	// disable channel
 	tx->CCR &= ~DMA_CCR_EN;
@@ -56,12 +56,13 @@ void DMA_Init_UARTx(DMA_Channel_TypeDef * tx, USART_TypeDef * uart) {
 	// enable transfer complete interrupt
 	tx->CCR |= DMA_CCR_TCIE;
 
+/*
 	// set interrupt priority to 0
 	NVIC_ClearPendingIRQ(DMA1_Channel4_IRQn);
     NVIC_SetPriority(DMA1_Channel4_IRQn, 0);
     // enable interrupt
     NVIC_EnableIRQ(DMA1_Channel4_IRQn);
-
+*/
 	// set interrupt priority to 0
 	NVIC_ClearPendingIRQ(DMA1_Channel7_IRQn);
     NVIC_SetPriority(DMA1_Channel7_IRQn, 0);

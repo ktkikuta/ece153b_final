@@ -27,7 +27,94 @@ Project File Date:  03/20/2024
 <h2>Output:</h2>
 *** Using Compiler 'V6.21', folder: 'C:\Keil_v5\ARM\ARMCLANG\Bin'
 Build target 'Target 1'
-".\Objects\project.axf" - 0 Error(s), 0 Warning(s).
+src/UART.c(46): warning: passing 'volatile DMA_Channel_TypeDef *' to parameter of type 'DMA_Channel_TypeDef *' discards qualifiers [-Wincompatible-pointer-types-discards-qualifiers]
+   46 |         DMA_Init_UARTx(tx, USART1);
+      |                        ^~
+src/DMA.h(14): note: passing argument to parameter 'tx' here
+   14 | void DMA_Init_UARTx(DMA_Channel_TypeDef * tx, USART_TypeDef * uart);
+      |                                           ^
+src/UART.c(67): warning: passing 'volatile DMA_Channel_TypeDef *' to parameter of type 'DMA_Channel_TypeDef *' discards qualifiers [-Wincompatible-pointer-types-discards-qualifiers]
+   67 |         DMA_Init_UARTx(tx, USART2);
+      |                        ^~
+src/DMA.h(14): note: passing argument to parameter 'tx' here
+   14 | void DMA_Init_UARTx(DMA_Channel_TypeDef * tx, USART_TypeDef * uart);
+      |                                           ^
+src/UART.c(217): warning: passing 'volatile char[256]' to parameter of type 'char *' discards qualifiers [-Wincompatible-pointer-types-discards-qualifiers]
+  217 |                 UART_onInput(inputs, IO_SIZE);
+      |                              ^~~~~~
+src/UART.h(28): note: passing argument to parameter 'inputs' here
+   28 | void UART_onInput(char* inputs, uint32_t size);
+      |                         ^
+src/UART.c(246): warning: implicit conversion loses integer precision: 'volatile uint16_t' (aka 'volatile unsigned short') to 'char' [-Wimplicit-int-conversion]
+  246 |                 char ch = USART1->RDR;
+      |                      ~~   ~~~~~~~~^~~
+src/UART.c(246): warning: mixing declarations and code is incompatible with standards before C99 [-Wdeclaration-after-statement]
+  246 |                 char ch = USART1->RDR;
+      |                      ^
+src/UART.c(266): warning: implicit conversion loses integer precision: 'volatile uint16_t' (aka 'volatile unsigned short') to 'char' [-Wimplicit-int-conversion]
+  266 |                                 char ch = USART2->RDR;
+      |                                      ~~   ~~~~~~~~^~~
+src/UART.c(269): warning: passing 'uint8_t *' (aka 'unsigned char *') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+  269 |                                         if (strlen(incoming) != 0) {
+      |                                                    ^~~~~~~~
+C:\Keil_v5\ARM\ARMCLANG\Bin\..\include\string.h(335): note: passing argument to parameter here
+  335 | extern _ARMABI size_t strlen(const char * /*s*/) __attribute__((__nonnull__(1)));
+      |                                                ^
+src/UART.c(270): warning: passing 'uint8_t *' (aka 'unsigned char *') to parameter of type 'char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+  270 |                                                         UART_onInput(incoming, incoming_len);
+      |                                                                      ^~~~~~~~
+src/UART.h(28): note: passing argument to parameter 'inputs' here
+   28 | void UART_onInput(char* inputs, uint32_t size);
+      |                         ^
+src/UART.c(263): warning: mixing declarations and code is incompatible with standards before C99 [-Wdeclaration-after-statement]
+  263 |                 uint8_t * incoming;
+      |                           ^
+src/UART.c(268): warning: variable 'incoming' is uninitialized when used here [-Wuninitialized]
+  268 |                                                 incoming[incoming_len++] = '\0';
+      |                                                 ^~~~~~~~
+src/UART.c(263): note: initialize the variable 'incoming' to silence this warning
+  263 |                 uint8_t * incoming;
+      |                                   ^
+      |                                    = NULL
+src/UART.c(24): warning: unused variable 'index' [-Wunused-variable]
+   24 | static volatile uint8_t index = 0;
+      |                         ^~~~~
+src/UART.c(174): warning: unsafe buffer access [-Wunsafe-buffer-usage]
+  174 |         while(data[data_length] != '\0'){
+      |               ^~~~
+src/UART.c(184): warning: unsafe buffer access [-Wunsafe-buffer-usage]
+  184 |                         active[i]= '\0';
+      |                         ^~~~~~
+src/UART.c(188): warning: unsafe buffer access [-Wunsafe-buffer-usage]
+  188 |                         active[i] = (uint8_t)data[i];
+      |                         ^~~~~~
+src/UART.c(188): warning: unsafe buffer access [-Wunsafe-buffer-usage]
+  188 |                         active[i] = (uint8_t)data[i];
+      |                                              ^~~~
+src/UART.c(199): warning: unsafe buffer access [-Wunsafe-buffer-usage]
+  199 |                         pending[i]= '\0';
+      |                         ^~~~~~~
+src/UART.c(203): warning: unsafe buffer access [-Wunsafe-buffer-usage]
+  203 |                         pending[i] = (uint8_t)data[i];
+      |                         ^~~~~~~
+src/UART.c(203): warning: unsafe buffer access [-Wunsafe-buffer-usage]
+  203 |                         pending[i] = (uint8_t)data[i];
+      |                                               ^~~~
+src/UART.c(214): warning: unsafe buffer access [-Wunsafe-buffer-usage]
+  214 |         inputs[input_size++] = ch;
+      |         ^~~~~~
+src/UART.c(268): warning: unsafe buffer access [-Wunsafe-buffer-usage]
+  268 |                                                 incoming[incoming_len++] = '\0';
+      |                                                 ^~~~~~~~
+src/UART.c(274): warning: unsafe buffer access [-Wunsafe-buffer-usage]
+  274 |                                                 incoming[incoming_len++] = ch;
+      |                                                 ^~~~~~~~
+21 warnings generated.
+compiling UART.c...
+linking...
+Program Size: Code=14336 RO-data=1308 RW-data=12 ZI-data=2676  
+FromELF: creating hex file...
+".\Objects\project.axf" - 0 Error(s), 21 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -50,7 +137,7 @@ Package Vendor: Keil
 <h2>Collection of Component Files used:</h2>
 
    * Component: ARM::CMSIS:CORE@5.6.0
-Build Time Elapsed:  00:00:00
+Build Time Elapsed:  00:00:01
 </pre>
 </body>
 </html>

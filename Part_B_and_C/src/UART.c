@@ -10,6 +10,9 @@
 #include "UART.h"
 #include "DMA.h"
 
+#include <stdio.h>
+#include <string.h>
+
 static volatile DMA_Channel_TypeDef * tx;
 
 static volatile uint8_t data_t_0[IO_SIZE];
@@ -67,8 +70,8 @@ void UART2_Init(void) {
 	DMA1_CSELR->CSELR |= (1<<25);
 
 	USART_Init(USART2);
-	NVIC_EnableIRQ(USART2_IRQn);
-	NVIC_SetPriority(USART2_IRQn, 1);
+	//NVIC_EnableIRQ(USART2_IRQn);
+	//NVIC_SetPriority(USART2_IRQn, 1);
 }
 
 void UART1_GPIO_Init(void) {
@@ -148,18 +151,17 @@ void USART_Init(USART_TypeDef * USARTx) {
 	USARTx->CR3 |= USART_CR3_DMAT;
 
 	// Enable Transmitter/Receiver
-	USARTx->CR1 |= USART_CR1_TE | USART_CR1_RE;
+	USARTx->CR1 |= USART_CR1_TE | USART_CR1_RE | USART_CR1_TCIE | USART_CR1_RXNEIE;
 
 	// Enable USART
 	USARTx->CR1 |= USART_CR1_UE;
-
+/*
 	//Configure NVIC
 	NVIC_EnableIRQ(USART1_IRQn);
 	NVIC_SetPriority(USART1_IRQn , 1);
-
-	//idk if we need this or not
+*/
 	NVIC_EnableIRQ(USART2_IRQn);
-	NVIC_SetPriority(USART2_IRQn , 1);
+	NVIC_SetPriority(USART2_IRQn , 2);
 
 }
 
@@ -254,8 +256,25 @@ void USART1_IRQHandler(void){
 }
 
 void USART2_IRQHandler(void){
-
-	NVIC_ClearPendingIRQ(USART2_IRQn);
+	
+		NVIC_ClearPendingIRQ(USART2_IRQn);
+	
+	
+		uint8_t * incoming;
+		uint8_t incoming_len = 0;
+		if (USART2->ISR & USART_ISR_RXNE) {
+				char ch = USART2->RDR;
+				if (ch == '\n' || ch == '\r') {
+						incoming[incoming_len++] = '\0';
+					if (strlen(incoming) != 0) {
+							UART_onInput(incoming, incoming_len);
+					}
+					incoming_len = 0;
+				} else {
+						incoming[incoming_len++] = ch;
+				}
+		}
+	/*NVIC_ClearPendingIRQ(USART2_IRQn);
 
 	if (USART2->ISR & USART_ISR_RXNE) {
 		USART2->RQR |= USART_RQR_RXFRQ;
@@ -269,5 +288,5 @@ void USART2_IRQHandler(void){
 		USART2->ICR |= USART_ICR_TCCF;
 		tx->CCR &= ~DMA_CCR_EN;
 		on_complete_transfer();
-	}
+	*/
 }

@@ -28,7 +28,7 @@ static volatile uint8_t temp_disabled_counter = 3000;
 // cannot use var name "inputs" here, we have a global var named that
 void UART_onInput(char* inputsParam, uint32_t size) {
 	//check input string, print out console message, rotate motor, print out console message, wait 3 seconds
-	if(inputsParam == "open\n"){
+	if(inputsParam == "open\n" || inputsParam == "open\r"){
 		sprintf(buffer, "Door opening.\n");
 		UART_print(buffer);
 		//open door by enabling systick, interrupts start happening, have accelerometer disable systick to stop rotating
@@ -37,7 +37,7 @@ void UART_onInput(char* inputsParam, uint32_t size) {
 		UART_print(buffer);
 		// delay(3000);
 		temp_disabled = 1;
-	}else if(inputsParam == "close\n"){
+	}else if(inputsParam == "close\n" || inputsParam == "close\r"){
 		sprintf(buffer, "Door closing\n");
 		UART_print(buffer);
 		setDire(0);
@@ -94,6 +94,8 @@ int main(void) {
 	while(1) {
 		//read accelerometer
 		readValues(&x, &y, &z);
+		
+		int cur_dire = getDire();
 		//read tempurature sensor
 		Data_Send = 0;
 		I2C_SendData(I2C1, SecondaryAddress, &Data_Send, 1);
@@ -104,7 +106,7 @@ int main(void) {
 
 		int temp = (Data_Receive & 0x7F) - (((Data_Receive & 0x80) != 0) ? 128 : 0);
 
-		if(temp != prevTemp){
+		if(temp != prevTemp && temp_disabled == 0){
 			sprintf(buffer, "Temperature: %d\n", Data_Receive);
 			UART_print(buffer);
 			prevTemp = Data_Receive;
@@ -112,7 +114,7 @@ int main(void) {
 		/* * * * * * * * * * * * * * * * * * * * * * * * * */
 		// logic for stopping door when door is finished closing or opening
 
-		if (((z >= .8)) || ((y <= -.9))) {
+		if ((cur_dire == OPENDOOR && (z >= .9)) || (cur_dire == CLOSEDOOR && (y <= -.9))) {
 			setDire(2); // set dire to stop, check rotate() in motor.c
 		}
 
@@ -122,7 +124,7 @@ int main(void) {
 		if (temp_disabled == 0) {
 			/* * * * * * * * * * * * * * * * * * * * * * * * * */
 			// schmitt upper
-			if (temp > 25 && z < .8) {
+			if (temp > 30 && z < .8) {
 				sprintf(buffer, "Temperature too high. Door opening.\r\n");
 				UART_print(buffer);
 
@@ -136,7 +138,7 @@ int main(void) {
 
 			/* * * * * * * * * * * * * * * * * * * * * * * * * */
 			// schmitt lower
-			if (temp < 20 && y > -.96) {
+			if (temp < 20 && y > -.90) {
 				sprintf(buffer, "Temperature too low. Door closing.\r\n");
 				UART_print(buffer);
 
@@ -163,12 +165,12 @@ int main(void) {
 
 		 sprintf(buffer, "X: %.2f, Y: %.2f, Z: %.2f\n", x, y, z);
 		 UART_print(buffer);
-
+		//for console control of door
+		//UART_onInput(inputs, IO_SIZE);
 
 
 		/*
-		//for console control of door
-		//UART_onInput(inputs, IO_SIZE);
+
 
 		//check accelerometer readings to end opening/closing door
 		//need to find acceleration parameters that make this work

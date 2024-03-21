@@ -86,3 +86,7 @@ void rotate(void) {
 void setDire(int8_t direction) {
 	dire = direction;
 }
+
+int getDire(void) {
+	return dire;
+}

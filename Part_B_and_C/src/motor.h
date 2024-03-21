@@ -6,6 +6,7 @@
 void Motor_Init(void);
 void rotate(void);
 void setDire(int8_t direction);
+int getDire(void);
 
 static volatile int8_t dire = 0;
 
