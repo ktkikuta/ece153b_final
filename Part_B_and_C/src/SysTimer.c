@@ -38,9 +38,7 @@ void SysTick_Init(void) {
 
 void SysTick_Handler(void) {
 	stepT++;
-	if(door_spinning){
-		rotate();
-	}
+	rotate();
 
 }
 
