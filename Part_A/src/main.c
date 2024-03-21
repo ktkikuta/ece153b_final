@@ -24,7 +24,7 @@ int main(void) {
 	USART_Init(USART2);
 
 	printf("Program Starts.\r\n");
-	printf("Motor direction? (R for clockwise, L for counterclockwise)\n");
+	printf("Motor direction? (R for clockwise, L for counterclockwise, any other character to stop)\n");
 	scanf("%c", &ch);
 	while(1) {
 		if(ch == 'R'){
@@ -32,7 +32,8 @@ int main(void) {
 		}else if(ch == 'L'){
 			setDire(1);
 		}else{
-			printf("Not a valid character.\n");
+			setDire(-1);
+			printf("Stopped motor.\n");
 		}
 	}
 }

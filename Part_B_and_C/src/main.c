@@ -22,6 +22,7 @@ static char buffer[IO_SIZE];
 #define OPENDOOR 0
 #define CLOSEDOOR 1
 
+// cannot use var name "inputs" here, we have a global var named that
 void UART_onInput(char* inputs, uint32_t size) {
 	//check input string, print out console message, rotate motor, print out console message, wait 3 seconds
 	if(inputs == "Open door\n"){
@@ -76,11 +77,13 @@ int main(void) {
 	sprintf(buffer, "Program Starts.\r\n");
 	UART_print(buffer);
 
-	//start door in closed position
-	//Y = -1 closed
-	//Z = 1 open
+	// 1. The default position for the door should be closed (down facing). You should use accelerometer
+	//		 to ensure that it's always facing down regardless of initial motor position.
+	// Y = -1 closed
+	// Z = 1 open
+	
 	readValues(&x, &y, &z);
-	if(y > -1){
+	if(y > -1) {
 		setDire(CLOSEDOOR);
 		door_spinning = 1;
 		while(y > -1){
@@ -88,6 +91,9 @@ int main(void) {
 		}
 		door_spinning = 0;
 	}
+	
+	
+	
 	while(1) {
 		//read accelerometer
 		readValues(&x, &y, &z);
@@ -102,13 +108,48 @@ int main(void) {
 		int temp = (Data_Receive & 0x7F) - (((Data_Receive & 0x80) != 0) ? 128 : 0);
 
 		if(temp != prevTemp){
-			//sprintf(buffer, "Tempurature: %d\n", Data_Receive);
-			//UART_print(buffer);
+			sprintf(buffer, "Tempurature: %d\n", Data_Receive);
+			UART_print(buffer);
 			prevTemp = Data_Receive;
 		}
-
-		sprintf(buffer, "X: %.2f, Y: %.2f, Z: %.2f\n", x, y, z);
-		UART_print(buffer);
+		
+		/* * * * * * * * * * * * * * * * * * * * * * * * * */
+		// schmitt upper
+		if (temp > 30) {
+			sprintf(buffer, "Temperature too high. Door opening.\r\n");
+			UART_print(buffer);
+			
+			setDire(OPENDOOR);
+			door_spinning = 1;
+			while (z < 1) readValues(&x, &y, &z);
+			door_spinning = 0;
+			
+			sprintf(buffer, "Door opened.\r\n");
+			UART_print(buffer);
+		}
+		
+		/* * * * * * * * * * * * * * * * * * * * * * * * * */
+		// schmitt lower
+		if (temp < 20) {
+			sprintf(buffer, "Temperature too low. Door closing.\r\n");
+			UART_print(buffer);
+			
+			setDire(CLOSEDOOR);
+			door_spinning = 1;
+			while (y > -1) readValues(&x, &y, &z);
+			door_spinning = 0;
+			
+			sprintf(buffer, "Door closed.\r\n");
+			UART_print(buffer);
+		}
+		
+		/* * * * * * * * * * * * * * * * * * * * * * * * * */
+		
+		// input reading (and delays to temp sensor) are handled in UART_onInput()
+		
+		
+		// sprintf(buffer, "X: %.2f, Y: %.2f, Z: %.2f\n", x, y, z);
+		// UART_print(buffer);
 
 
 
